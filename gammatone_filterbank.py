@@ -1,6 +1,7 @@
 from gammatone import gtgram
 import numpy as np
 
+
 class GammatoneFilterbank:
     sample_rate = 44100
     window_time = 0.025
