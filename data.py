@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import stft
 from gammatone import filters as gt_filters
 from gammatone import gtgram
-
+import pywt
 
 def perform_fft(audio_samples, segment_length=1024):
     bins, segments, spectrum = stft(x=audio_samples, nperseg=segment_length)
@@ -45,3 +45,31 @@ def pol2cart(rho, phi):
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
     return x, y
+
+
+def lin2ulaw(x, u=255):
+    x = np.sign(x) * (np.log(1 + u * np.abs(x)) / np.log(1 + u))
+    return x
+
+
+def ulaw2lin(x, u=255.):
+    max_value = np.iinfo('uint8').max
+    min_value = np.iinfo('uint8').min
+    x = x.astype('float64', casting='safe')
+    x -= min_value
+    x /= ((max_value - min_value) / 2.)
+    x -= 1.
+    x = np.sign(x) * (1 / u) * (((1 + u) ** np.abs(x)) - 1)
+    # x = float_to_uint8(x)
+    return x
+
+
+def perform_wavelet_transform(input_data, wavelet='db1', level=5):
+    coeffs = pywt.wavedec(input_data, wavelet, 'periodic', level=level)
+    return coeffs
+
+
+def perform_inverse_wavelet_transform(coeffs, wavelet='db1'):
+    audio = pywt.waverec(coeffs, wavelet, 'periodic')
+    return audio
+
