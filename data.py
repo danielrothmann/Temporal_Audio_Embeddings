@@ -64,12 +64,14 @@ def ulaw2lin(x, u=255.):
     return x
 
 
-def perform_wavelet_transform(input_data, wavelet='db1', level=5):
-    coeffs = pywt.wavedec(input_data, wavelet, 'periodic', level=level)
-    return coeffs
+def float_to_uint8(x):
+    x += 1.
+    x /= 2.
+    uint8_max_value = np.iinfo('uint8').max
+    x *= uint8_max_value
+    x = x.astype('uint8')
+    return x
 
 
-def perform_inverse_wavelet_transform(coeffs, wavelet='db1'):
-    audio = pywt.waverec(coeffs, wavelet, 'periodic')
-    return audio
-
+def one_hot(x):
+    return np.eye(256, dtype='uint8')[x.astype('uint8')]

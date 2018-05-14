@@ -90,22 +90,18 @@ def prepare_processor(input_dim,
 
 
 def prepare_fftnet(sample_input_dim, aux_input_dim, depth, channels=256, optimizer_type='rmsprop', loss_type='mse') -> Model:
-    sample_inputs = Input(shape=(sample_input_dim,), name="Sample_Input")
-    aux_inputs = Input(shape=(aux_input_dim,), name="Auxiliary_Input")
+    sample_inputs = Input(shape=(sample_input_dim, channels), name="Sample_Input")
+    # aux_inputs = Input(shape=(aux_input_dim,), name="Auxiliary_Input")
 
-    repeated_inputs = RepeatVector(channels)(sample_inputs)
-    repeated_inputs = Reshape((sample_input_dim, channels))(repeated_inputs)
-
-    fftnet_layer = repeated_inputs
+    fftnet_layer = sample_inputs
     fft_input_dim = sample_input_dim
 
     for i in range(depth):
         fftnet_layer, fft_input_dim = apply_fftnet_layer(fftnet_layer, fft_input_dim, channels)
 
-    dense = Dense(1, activation='softmax', name='Output')(fftnet_layer)
-    dense = Flatten()(dense)
+    dense = Dense(channels, activation='softmax', name='Output')(fftnet_layer)
 
-    model = Model([sample_inputs, aux_inputs], dense)
+    model = Model(sample_inputs, dense)
     model.compile(optimizer=optimizer_type, loss=loss_type,  metrics=['acc'])
     print(model.summary())
 
