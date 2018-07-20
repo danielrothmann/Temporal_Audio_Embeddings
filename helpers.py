@@ -2,8 +2,8 @@ import wave
 import tkinter as tk
 from tkinter import filedialog
 import struct
-import csv
 import numpy
+from pydub import AudioSegment
 
 # Remove tkinter gui for file open dialogs
 root = tk.Tk
@@ -20,11 +20,31 @@ def wav_to_floats(wave_file):
             A float array representing the audio
 
     """
-    w = wave.open(wave_file)
-    astr = w.readframes(w.getnframes())
-    a = struct.unpack("%ih" % (w.getnframes() * w.getnchannels()), astr)
-    a = [float(val) / pow(2, 15) for val in a]
-    return a
+    # with wave.open(wave_file) as w:
+    #     num_frames = w.getnframes()
+    #     num_channels = w.getnchannels()
+    #     astr = w.readframes(num_frames)
+    #     a = struct.unpack("%ih" % (num_frames * num_channels), astr)
+    #     a = [float(val) / pow(2, 15) for val in a]
+    #
+    #     if num_channels is not 1:
+    #         a = a
+
+    audio = AudioSegment.from_wav(wave_file)
+
+    if audio.channels is not 1:
+        audio = audio.set_channels(1)
+
+    if audio.frame_rate is not 44100:
+        audio = audio.set_frame_rate(44100)
+
+    if audio.sample_width is not 2:
+        audio = audio.set_sample_width(2)
+
+    audio = audio.get_array_of_samples()
+    audio = [float(val) / pow(2, 15) for val in audio]
+
+    return audio
 
 
 def wav_to_array_dialog():

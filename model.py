@@ -1,4 +1,4 @@
-from keras.layers import Input, LSTM, RepeatVector, Dense, Flatten, Conv1D, GlobalAveragePooling1D, Lambda, Add, Reshape, Activation, Cropping1D
+from keras.layers import Input, LSTM, RepeatVector, Dense, Flatten, Conv1D, GlobalAveragePooling1D, Lambda, Add, Reshape, Activation, AlphaDropout
 from keras.models import Model, Sequential
 from keras.activations import relu
 import numpy as np
@@ -39,13 +39,10 @@ def prepare_autoencoder(timesteps,
 
 def prepare_processor(input_dim,
                       output_dim,
-                      output_timesteps,
                       hidden_dim,
                       dense_depth,
-                      lstm_depth,
                       optimizer_type,
-                      loss_type,
-                      batch_size) -> Model:
+                      loss_type) -> Model:
     """Prepares the processing LSTM decoder network
 
             Args:
@@ -63,25 +60,15 @@ def prepare_processor(input_dim,
         """
 
     model = Sequential()
-    # model.add(Dense(input_dim, input_shape=(input_dim,), activation="relu", batch_input_shape=(batch_size, input_dim,)))
+    model.add(Dense(input_dim, input_shape=(input_dim,), activation="selu", kernel_initializer='lecun_normal'))
+
+    model.add(AlphaDropout(0.2))
 
     for i in range(dense_depth):
-        model.add(Dense(hidden_dim, activation="relu"))
+        model.add(Dense(hidden_dim, activation="selu", kernel_initializer='lecun_normal'))
+        model.add(AlphaDropout(0.2))
 
-    model.add(RepeatVector(output_timesteps, input_shape=(input_dim,), batch_input_shape=(batch_size, input_dim,)))
-
-    model.add(Conv1D(int(output_timesteps), 16, activation="relu", dilation_rate=16, padding="causal"))
-    model.add(Conv1D(int(output_timesteps), 16, activation="relu", dilation_rate=8, padding="causal"))
-    model.add(Conv1D(int(output_timesteps), 16, activation="relu", dilation_rate=4, padding="causal"))
-    model.add(Conv1D(output_timesteps, 16, activation="relu", dilation_rate=1, padding="causal"))
-    model.add(GlobalAveragePooling1D())
-
-    model.add(Dense(output_timesteps))
-
-    # for i in range(lstm_depth):
-    #     model.add(LSTM(hidden_dim, return_sequences=True, stateful=True))
-
-    # model.add(LSTM(output_dim, return_sequences=True, stateful=True))
+    model.add(Dense(output_dim, activation="softmax"))
 
     model.compile(optimizer=optimizer_type, loss=loss_type, metrics=['acc'])
     print(model.summary())
